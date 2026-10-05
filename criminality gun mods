@@ -1,0 +1,51 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local RECOIL_KEYS = {
+    "AngleX_Min", "AngleX_Max",
+    "AngleY_Min", "AngleY_Max",
+    "AngleZ_Min", "AngleZ_Max",
+}
+local RECOIL_ZERO = {
+    AngleX_Min = 0, AngleX_Max = 0,
+    AngleY_Min = 0, AngleY_Max = 0,
+    AngleZ_Min = 0, AngleZ_Max = 0,
+}
+
+local function val(id, default)
+    local ok, v = pcall(UI.GetValue, id)
+    if ok and v ~= nil then return v end
+    return default
+end
+
+local function applyMods()
+    if val("gm_equip", false) then
+        print("EquipTime set on: " .. tostring(setgc("EquipTime", 0)))
+    end
+    if val("gm_recoil", false) then
+        local cache = getgc(RECOIL_KEYS)
+        print("Recoil values found: " .. #cache)
+        applygc(cache, RECOIL_ZERO)
+    end
+    print("Finished")
+end
+
+UI.AddTab("Gun Mods", function(tab)
+    local sec = tab:Section("Weapon", "Left")
+    sec:Toggle("gm_equip", "Instant Equip")
+    sec:Toggle("gm_recoil", "No Recoil")
+    sec:Toggle("gm_auto", "Re-apply on respawn", true)
+    sec:Button("Apply Now", function()
+        applyMods()
+    end)
+    sec:Tip("Re-click Apply after switching weapons if values reset")
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.spawn(function()
+        wait(3)
+        if val("gm_auto", true) then
+            applyMods()
+        end
+    end)
+end)
